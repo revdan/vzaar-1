@@ -249,6 +249,16 @@ module Vzaar
             <transcoding>#{options[:transcoding]}</transcoding>
         }
       end
+
+      if options[:profile] == 6 && options[:width] && options[:birate]
+        request_xml += %{
+            <encoding>
+              <width>#{options[:width]}</width>
+              <birate>#{options[:birate]}</birate>
+            </encoding>
+        }
+      end
+      
       request_xml += %{ 
           </video>
         </vzaar-api>

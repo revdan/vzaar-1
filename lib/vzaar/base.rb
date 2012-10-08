@@ -1,3 +1,4 @@
+require 'ruby-debug'
 module Vzaar
 
   # You can use Vzaar::Base class for accessing and managing your resources on vzaar.
@@ -250,11 +251,17 @@ module Vzaar
         }
       end
 
-      if options[:profile] == 6 && options[:width] && options[:birate]
+      if options[:replace_id]
+        request_xml += %{
+            <replace_id>#{options[:replace_id]}</replace_id>
+        }
+      end
+
+      if options[:profile] == 6 && options[:width] && options[:bitrate]
         request_xml += %{
             <encoding>
               <width>#{options[:width]}</width>
-              <birate>#{options[:birate]}</birate>
+              <bitrate>#{options[:bitrate]}</bitrate>
             </encoding>
         }
       end
@@ -277,19 +284,28 @@ module Vzaar
     # Usage:
     # * vzaar.upload_video '/home/me/video.mp4', 'some title', 'some desc', '1'
     # * vzaar.upload_video '/home/me/video.mp4', ""
-    def upload_video(path, title = "", description = "", profile = "", transcoding = nil)
+    # def upload_video(path, title = "", description = "", profile = "", transcoding = nil)
+    
+    def upload_video(opts)
       # Get signature
       sig = signature
       @logger.debug "Uploading..." 
       # Upload to S3
       res = upload_to_s3 sig.acl, sig.bucket, sig.policy, sig.aws_access_key,
-        sig.signature, sig.key, path
+        sig.signature, sig.key, opts[:path]
       if res
         @logger.debug "Upload complete"
         # And process in vzaar
-        process_video :guid => sig.guid, :title => title,
-          :description => description, :profile => profile,
-          :transcoding => transcoding
+        process_video(
+          {
+            :guid => sig.guid,
+            :title => opts[:title],
+            :description => opts[:description],
+            :profile => opts[:profile],
+            :transcoding => opts[:transcoding],
+            :bitrate => opts[:bitrate],
+            :width => opts[:width]
+          })
       else
         @logger.debug "Upload to s3 failed"
         return nil
